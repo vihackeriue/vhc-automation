@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ComponentType, ChangeEvent } from "react";
 import {
   AlertTriangle,
   CloudLightning,
   Wind,
   Eye,
-  Copy,
   X,
   Calendar,
   Clock,
@@ -21,7 +21,7 @@ type InputProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: ComponentType<{ className?: string }>;
   list?: string;
   type?: string;
 };
@@ -34,11 +34,13 @@ const Input = ({
   list,
   type = "text",
 }: InputProps) => {
+  const isTime = type === "time";
+
   return (
     <div className="mb-4">
       <div className="relative">
-        {Icon && (
-          <Icon className="absolute left-4 top-4 text-blue-500 w-5 h-5 pointer-events-none" />
+        {Icon && !isTime && (
+          <Icon className="absolute left-4 top-4 text-blue-500 w-5 h-5 pointer-events-none z-10" />
         )}
 
         <input
@@ -48,8 +50,8 @@ const Input = ({
           onChange={(e) => onChange(e.target.value)}
           placeholder={label}
           className={`w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl py-3.5 pr-4 outline-none transition-all text-[16px] font-medium text-slate-700 touch-manipulation ${
-            Icon ? "pl-12" : "pl-4"
-          } ${list ? "pr-12" : ""}`}
+            Icon && !isTime ? "pl-12" : "pl-4"
+          } ${list ? "pr-12" : ""} ${isTime ? "min-h-[54px] px-4" : ""}`}
         />
 
         {list && (
@@ -94,6 +96,9 @@ export default function Home() {
     deXuat: "",
   });
 
+  // Số tuyến dùng cho thông báo khẩn cấp
+  const [tuyenKhanCap, setTuyenKhanCap] = useState("");
+
   // ============================================================
   // DÔNG SÉT
   // ============================================================
@@ -115,20 +120,23 @@ export default function Home() {
     ngay: "",
     gio: "",
     tuyen: "",
-    tocDoCap: "",
-    tinhTrang: "",
+
+    // Các trụ và tốc độ gió
     truSo: "",
     tocDo: "",
     tocDoMax: "",
-    kieuGio: "",
+
+    // Thông tin toàn tuyến
     mucGioThucTe: "",
     tocDoToanTuyen: "",
     xuHuong: "",
     nguyCo: "",
-    batThuong: "",
-    deXuatTocDo: "",
+
+    // Kiến nghị / đề xuất
+    kienNghi: "",
+    xinQuyetDinh: "",
+    hoatDongTuyen: "",
     xinHoTro: "",
-    deXuatKhac: "",
   });
 
   // ============================================================
@@ -196,7 +204,6 @@ export default function Home() {
 
       setChung((prev) => ({
         ...prev,
-
         tocDoNgay: prev.tocDoNgay || today,
         tocDoThoiGian: prev.tocDoThoiGian || time,
 
@@ -251,13 +258,16 @@ export default function Home() {
   // ============================================================
 
   const generateTocDoContent = () => {
+    const ghiChu = chung.tocDoGhiChu.trim();
+
+    const ghiChuLine = ghiChu ? `\nGhi chú: ${ghiChu}` : "";
+
     return `CẬP NHẬT TỐC ĐỘ TUYẾN CÁP
 
 Ngày: ${chung.tocDoNgay}
 Tuyến cáp: ${chung.tocDoTuyen}
 Tốc độ hiện tại: ${chung.tocDoHienTai} m/s
-Thời gian: ${chung.tocDoThoiGian}
-Ghi chú: ${chung.tocDoGhiChu}`;
+Thời gian: ${chung.tocDoThoiGian}${ghiChuLine}`;
   };
 
   // ============================================================
@@ -276,12 +286,7 @@ Loại: ${chung.loai5S}
 Vị trí: ${chung.ga5S}
 Tuyến cáp: ${chung.tuyen5S}
 Nhân sự: ${chung.nhanSu5S}
-${timeLine}
-Hình ảnh: ${
-      anh5S.length > 0
-        ? `${anh5S.length} ảnh (${anh5S.map((file) => file.name).join(", ")})`
-        : "Chưa đính kèm"
-    }`;
+${timeLine}`;
   };
 
   // ============================================================
@@ -348,28 +353,21 @@ Trân trọng!`;
     // ==========================================================
 
     if (activeTab === 2) {
-      return `*Ngày:* ${cg.ngay}
-*Thời gian:* ${cg.gio}
+      return `Thời gian: ${cg.gio}
 
-----------------------------
+THÔNG TIN CẤP GIÓ
 
-*THÔNG TIN CẤP GIÓ*
+Phòng KTCT báo cáo a/c cập nhật thông tin gió trên tuyến
 
-*Phòng KTCT báo cáo a/c cập nhật thông tin gió trên tuyến*
-
-*Tuyến cáp số:* ${cg.tuyen}
-
-*+ T.độ cáp hiện tại:* ${cg.tocDoCap}
-*+ Tình trạng đón khách:* ${cg.tinhTrang}
++ Tuyến cáp số: ${cg.tuyen}
 
 ———————————————
 
-*Tốc độ gió:*
+Tốc độ gió:
 
 + Trụ số: ${cg.truSo}
 + Tốc độ (m/s): ${cg.tocDo}
 + Tốc độ max (m/s): ${cg.tocDoMax}
-+ Kiểu gió phổ biến: ${cg.kieuGio}
 + Mức độ gió thực tế trên tuyến: ${cg.mucGioThucTe}
 
 ———————————————
@@ -377,19 +375,18 @@ Trân trọng!`;
 + Tốc độ gió toàn tuyến (m/s): ${cg.tocDoToanTuyen}
 + Xu hướng gió (Tăng/Không đổi/Giảm): ${cg.xuHuong}
 + Nguy cơ/cảnh báo: ${cg.nguyCo}
-*+ Bất thường của hệ thống:* ${cg.batThuong}
 
 ———————————————
 
-*Đề xuất/Xin quyết định/chỉ đạo:*
-
-+ *Đề xuất tốc độ cáp:* ${cg.deXuatTocDo}
+Kiến nghị/Đề xuất:
+${cg.kienNghi}
++ Xin quyết định/chỉ đạo: ${cg.xinQuyetDinh}
++ Hoạt động tuyến cáp: ${cg.hoatDongTuyen}
 + Xin hỗ trợ: ${cg.xinHoTro}
-+ Đề xuất khác: ${cg.deXuatKhac}
 
 ———————————————
 
-*Trân trọng !*`;
+Trân trọng !`;
     }
 
     // ==========================================================
@@ -397,45 +394,6 @@ Trân trọng!`;
     // ==========================================================
 
     return generateTocDoContent();
-  };
-
-  // ============================================================
-  // COPY
-  // ============================================================
-
-  const copyToClipboard = async (text: string) => {
-    if (!text) {
-      showToast("Không có nội dung để copy!");
-      return;
-    }
-
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        const textarea = document.createElement("textarea");
-
-        textarea.value = text;
-        textarea.style.position = "fixed";
-        textarea.style.left = "-9999px";
-
-        document.body.appendChild(textarea);
-
-        textarea.focus();
-        textarea.select();
-
-        document.execCommand("copy");
-
-        document.body.removeChild(textarea);
-      }
-
-      showToast("Đã copy nội dung vào khay nhớ tạm!");
-
-      setShowPreview(false);
-    } catch (error) {
-      console.error("Copy error:", error);
-      showToast("Không thể copy nội dung!");
-    }
   };
 
   // ============================================================
@@ -447,6 +405,11 @@ Trân trọng!`;
     title: string = `Báo cáo ${tabs[activeTab].title}`,
     files: File[] = [],
   ) => {
+    if (!text.trim()) {
+      showToast("Không có nội dung để chia sẻ!");
+      return;
+    }
+
     try {
       if (navigator.share) {
         const shareData: ShareData = {
@@ -464,21 +427,46 @@ Trân trọng!`;
 
         await navigator.share(shareData);
       } else {
-        await copyToClipboard(text);
-
-        showToast("Thiết bị không hỗ trợ chia sẻ. Nội dung đã được copy!");
+        await navigator.clipboard.writeText(text);
+        showToast("Thiết bị chưa hỗ trợ chia sẻ. Nội dung đã được copy!");
       }
     } catch (error) {
-      // Người dùng đóng menu chia sẻ
       console.log("Share cancelled:", error);
     }
+  };
+
+  // ============================================================
+  // CHIA SẺ NHANH KHẨN CẤP
+  // ============================================================
+
+  const getEmergencyStopMessage = () => {
+    const tuyen = tuyenKhanCap.trim();
+
+    return `Tuyến ${tuyen} đang dừng ạ`;
+  };
+
+  const getEmergencyRestartMessage = () => {
+    const tuyen = tuyenKhanCap.trim();
+
+    return `Tuyến ${tuyen} đã chạy lại ạ`;
+  };
+
+  const sendEmergency = async (message: string) => {
+    const tuyen = tuyenKhanCap.trim();
+
+    if (!tuyen) {
+      showToast("Vui lòng nhập số tuyến trước!");
+      return;
+    }
+
+    await shareContent(message, "Thông báo khẩn cấp");
   };
 
   // ============================================================
   // XỬ LÝ ẢNH 5S
   // ============================================================
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
 
     if (!files.length) return;
@@ -539,7 +527,7 @@ Trân trọng!`;
           HEADER
       ====================================================== */}
 
-      <div className="bg-white/80 backdrop-blur-sm sticky top-0 z-40 py-4 px-6 border-b border-slate-100 flex justify-center">
+      <div className="bg-white/90 backdrop-blur-sm sticky top-0 z-40 py-4 px-6 border-b border-slate-100 flex justify-center">
         <h1 className="font-extrabold text-slate-800 tracking-wide">
           BÁO CÁO: {tabs[activeTab].title.toUpperCase()}
         </h1>
@@ -556,6 +544,81 @@ Trân trọng!`;
 
         {activeTab === 0 && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* KHẨN CẤP */}
+
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-1 h-6 bg-red-500 rounded-full" />
+
+                <span className="font-extrabold text-[17px] text-slate-800">
+                  Khẩn cấp
+                </span>
+              </div>
+
+              <div className="bg-red-50 border-2 border-red-100 rounded-3xl p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-red-500" />
+                  </div>
+
+                  <div>
+                    <div className="font-extrabold text-red-700">
+                      Gửi nhanh thông báo
+                    </div>
+
+                    <div className="text-xs text-red-500 mt-0.5">
+                      Nhập số tuyến rồi chọn trạng thái
+                    </div>
+                  </div>
+                </div>
+
+                <Input
+                  label="Số tuyến"
+                  value={tuyenKhanCap}
+                  onChange={setTuyenKhanCap}
+                  type="text"
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => sendEmergency(getEmergencyStopMessage())}
+                    className="flex items-center justify-center gap-2 min-h-14 px-3 rounded-2xl bg-red-500 text-white font-bold shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all text-sm active:scale-95 touch-manipulation"
+                  >
+                    <Share2 className="w-5 h-5 shrink-0" />
+
+                    <span>
+                      Tuyến {tuyenKhanCap.trim() ? tuyenKhanCap : "..."} đang
+                      dừng
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => sendEmergency(getEmergencyRestartMessage())}
+                    className="flex items-center justify-center gap-2 min-h-14 px-3 rounded-2xl bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all text-sm active:scale-95 touch-manipulation"
+                  >
+                    <Share2 className="w-5 h-5 shrink-0" />
+
+                    <span>
+                      Tuyến {tuyenKhanCap.trim() ? tuyenKhanCap : "..."} đã chạy
+                      lại
+                    </span>
+                  </button>
+                </div>
+
+                <p className="text-xs text-red-500 mt-3 text-center leading-relaxed">
+                  Bấm nút để mở bảng chia sẻ của điện thoại.
+                  <br />
+                  Có thể chọn Zalo, Viber, Messenger hoặc ứng dụng khác.
+                </p>
+              </div>
+            </div>
+
+            {/* THÔNG TIN SỰ CỐ */}
+
+            <SectionTitle title="Thông tin sự cố" />
+
             <Input
               label="Ngày"
               value={sc.ngay}
@@ -671,7 +734,6 @@ Trân trọng!`;
                       tgDung: v,
                     }))
                   }
-                  icon={Clock}
                   type="time"
                 />
               </div>
@@ -686,7 +748,6 @@ Trân trọng!`;
                       tgChayLai: v,
                     }))
                   }
-                  icon={Clock}
                   type="time"
                 />
               </div>
@@ -809,6 +870,8 @@ Trân trọng!`;
 
         {activeTab === 2 && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* NGÀY / GIỜ */}
+
             <div className="flex gap-3">
               <div className="flex-1">
                 <Input
@@ -820,12 +883,13 @@ Trân trọng!`;
                       ngay: v,
                     }))
                   }
+                  icon={Calendar}
                 />
               </div>
 
               <div className="flex-1">
                 <Input
-                  label="Giờ"
+                  label="Thời gian"
                   value={cg.gio}
                   onChange={(v) =>
                     setCg((prev) => ({
@@ -838,52 +902,30 @@ Trân trọng!`;
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <Input
-                  label="Tuyến số"
-                  value={cg.tuyen}
-                  onChange={(v) =>
-                    setCg((prev) => ({
-                      ...prev,
-                      tuyen: v,
-                    }))
-                  }
-                />
-              </div>
-
-              <div className="flex-1">
-                <Input
-                  label="Tốc độ cáp"
-                  value={cg.tocDoCap}
-                  onChange={(v) =>
-                    setCg((prev) => ({
-                      ...prev,
-                      tocDoCap: v,
-                    }))
-                  }
-                />
-              </div>
-            </div>
+            {/* TUYẾN */}
 
             <Input
-              label="Trạng thái đón khách"
-              value={cg.tinhTrang}
+              label="Tuyến cáp số"
+              value={cg.tuyen}
               onChange={(v) =>
                 setCg((prev) => ({
                   ...prev,
-                  tinhTrang: v,
+                  tuyen: v,
                 }))
               }
-              list="tinhtrang-list"
+              list="tuyen-cg-list"
             />
 
-            <datalist id="tinhtrang-list">
-              <option value="KTDN" />
-              <option value="Đón khách" />
+            <datalist id="tuyen-cg-list">
+              <option value="1" />
+              <option value="2" />
+              <option value="3" />
+              <option value="4" />
             </datalist>
 
-            <SectionTitle title="Thông tin gió" />
+            {/* THÔNG TIN GIÓ */}
+
+            <SectionTitle title="Tốc độ gió" />
 
             <Input
               label="Trụ số"
@@ -896,56 +938,31 @@ Trân trọng!`;
               }
             />
 
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <Input
-                  label="Tốc độ (m/s)"
-                  value={cg.tocDo}
-                  onChange={(v) =>
-                    setCg((prev) => ({
-                      ...prev,
-                      tocDo: v,
-                    }))
-                  }
-                  type="number"
-                />
-              </div>
-
-              <div className="flex-1">
-                <Input
-                  label="Max (m/s)"
-                  value={cg.tocDoMax}
-                  onChange={(v) =>
-                    setCg((prev) => ({
-                      ...prev,
-                      tocDoMax: v,
-                    }))
-                  }
-                  type="number"
-                />
-              </div>
-            </div>
-
             <Input
-              label="Kiểu gió phổ biến"
-              value={cg.kieuGio}
+              label="Tốc độ (m/s)"
+              value={cg.tocDo}
               onChange={(v) =>
                 setCg((prev) => ({
                   ...prev,
-                  kieuGio: v,
+                  tocDo: v,
                 }))
               }
-              list="kieugio-list"
+              placeholder=""
             />
 
-            <datalist id="kieugio-list">
-              <option value="Gió ngang" />
-              <option value="Gió dọc" />
-              <option value="Gió ngang và gió dọc" />
-            </datalist>
+            <Input
+              label="Tốc độ max (m/s)"
+              value={cg.tocDoMax}
+              onChange={(v) =>
+                setCg((prev) => ({
+                  ...prev,
+                  tocDoMax: v,
+                }))
+              }
+            />
 
             <Input
-              label="Mức độ thực tế"
+              label="Mức độ gió thực tế trên tuyến"
               value={cg.mucGioThucTe}
               onChange={(v) =>
                 setCg((prev) => ({
@@ -953,45 +970,56 @@ Trân trọng!`;
                   mucGioThucTe: v,
                 }))
               }
+              list="mucgio-list"
             />
 
-            <SectionTitle title="Toàn tuyến" />
+            <datalist id="mucgio-list">
+              <option value="Không xác định" />
+              <option value="Bình thường" />
+              <option value="Gió mạnh" />
+              <option value="Gió rất mạnh" />
+            </datalist>
 
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <Input
-                  label="V Toàn tuyến"
-                  value={cg.tocDoToanTuyen}
-                  onChange={(v) =>
-                    setCg((prev) => ({
-                      ...prev,
-                      tocDoToanTuyen: v,
-                    }))
-                  }
-                  type="number"
-                />
-              </div>
+            {/* TOÀN TUYẾN */}
 
-              <div className="flex-1">
-                <Input
-                  label="Xu hướng"
-                  value={cg.xuHuong}
-                  onChange={(v) =>
-                    setCg((prev) => ({
-                      ...prev,
-                      xuHuong: v,
-                    }))
-                  }
-                  list="xuhuong-cg-list"
-                />
-              </div>
-            </div>
+            <SectionTitle title="Thông tin toàn tuyến" />
+
+            <Input
+              label="Tốc độ gió toàn tuyến (m/s)"
+              value={cg.tocDoToanTuyen}
+              onChange={(v) =>
+                setCg((prev) => ({
+                  ...prev,
+                  tocDoToanTuyen: v,
+                }))
+              }
+              list="tocdo-toantuyen-list"
+            />
+
+            <datalist id="tocdo-toantuyen-list">
+              <option value="dao động 0-10" />
+              <option value="dao động 0-5" />
+              <option value="0" />
+              <option value="5" />
+              <option value="10" />
+            </datalist>
+
+            <Input
+              label="Xu hướng gió"
+              value={cg.xuHuong}
+              onChange={(v) =>
+                setCg((prev) => ({
+                  ...prev,
+                  xuHuong: v,
+                }))
+              }
+              list="xuhuong-cg-list"
+            />
 
             <datalist id="xuhuong-cg-list">
               <option value="Tăng" />
-              <option value="Giảm" />
               <option value="Không đổi" />
-              <option value="Không xác định" />
+              <option value="Giảm" />
             </datalist>
 
             <Input
@@ -1007,62 +1035,80 @@ Trân trọng!`;
             />
 
             <datalist id="nguyco-list">
+              <option value="Không" />
               <option value="Cảnh báo gió" />
               <option value="Báo động gió" />
+            </datalist>
+
+            {/* KIẾN NGHỊ */}
+
+            <SectionTitle title="Kiến nghị / Đề xuất" />
+
+            <Input
+              label="Kiến nghị/Đề xuất"
+              value={cg.kienNghi}
+              onChange={(v) =>
+                setCg((prev) => ({
+                  ...prev,
+                  kienNghi: v,
+                }))
+              }
+              list="kiennghi-list"
+            />
+
+            <datalist id="kiennghi-list">
               <option value="Không" />
             </datalist>
 
             <Input
-              label="Bất thường hệ thống"
-              value={cg.batThuong}
+              label="Xin quyết định/chỉ đạo"
+              value={cg.xinQuyetDinh}
               onChange={(v) =>
                 setCg((prev) => ({
                   ...prev,
-                  batThuong: v,
+                  xinQuyetDinh: v,
                 }))
               }
+              list="quyetdinh-list"
             />
 
-            <SectionTitle title="Đề xuất" />
+            <datalist id="quyetdinh-list">
+              <option value="Không" />
+            </datalist>
 
             <Input
-              label="Tốc độ cáp"
-              value={cg.deXuatTocDo}
+              label="Hoạt động tuyến cáp"
+              value={cg.hoatDongTuyen}
               onChange={(v) =>
                 setCg((prev) => ({
                   ...prev,
-                  deXuatTocDo: v,
+                  hoatDongTuyen: v,
                 }))
               }
+              list="hoatdong-list"
             />
 
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <Input
-                  label="Xin hỗ trợ"
-                  value={cg.xinHoTro}
-                  onChange={(v) =>
-                    setCg((prev) => ({
-                      ...prev,
-                      xinHoTro: v,
-                    }))
-                  }
-                />
-              </div>
+            <datalist id="hoatdong-list">
+              <option value="Không" />
+              <option value="Đang hoạt động" />
+              <option value="Tạm dừng" />
+            </datalist>
 
-              <div className="flex-1">
-                <Input
-                  label="Khác"
-                  value={cg.deXuatKhac}
-                  onChange={(v) =>
-                    setCg((prev) => ({
-                      ...prev,
-                      deXuatKhac: v,
-                    }))
-                  }
-                />
-              </div>
-            </div>
+            <Input
+              label="Xin hỗ trợ"
+              value={cg.xinHoTro}
+              onChange={(v) =>
+                setCg((prev) => ({
+                  ...prev,
+                  xinHoTro: v,
+                }))
+              }
+              list="hotro-list"
+            />
+
+            <datalist id="hotro-list">
+              <option value="Không" />
+            </datalist>
           </div>
         )}
 
@@ -1072,9 +1118,7 @@ Trân trọng!`;
 
         {activeTab === 3 && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* ==================================================
-                CẬP NHẬT TỐC ĐỘ TUYẾN CÁP
-            ================================================== */}
+            {/* CẬP NHẬT TỐC ĐỘ TUYẾN CÁP */}
 
             <SectionTitle title="Cập nhật tốc độ tuyến cáp" />
 
@@ -1134,7 +1178,6 @@ Trân trọng!`;
                     }))
                   }
                   type="time"
-                  icon={Clock}
                 />
               </div>
             </div>
@@ -1152,23 +1195,14 @@ Trân trọng!`;
 
             {/* NÚT TỐC ĐỘ */}
 
-            <div className="grid grid-cols-3 gap-2 mt-2 mb-8">
+            <div className="grid grid-cols-2 gap-2 mt-2 mb-8">
               <button
                 type="button"
                 onClick={() => openPreview(generateTocDoContent())}
-                className="flex items-center justify-center gap-1 h-14 rounded-2xl border-2 border-blue-500 text-blue-600 font-bold hover:bg-blue-50 transition-colors text-sm touch-manipulation active:scale-95"
+                className="flex items-center justify-center gap-2 h-14 rounded-2xl border-2 border-blue-500 text-blue-600 font-bold hover:bg-blue-50 transition-colors text-sm touch-manipulation active:scale-95"
               >
                 <Eye className="w-5 h-5" />
                 Xem
-              </button>
-
-              <button
-                type="button"
-                onClick={() => copyToClipboard(generateTocDoContent())}
-                className="flex items-center justify-center gap-1 h-14 rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-colors text-sm touch-manipulation active:scale-95"
-              >
-                <Copy className="w-5 h-5" />
-                Copy
               </button>
 
               <button
@@ -1179,16 +1213,14 @@ Trân trọng!`;
                     "Cập nhật tốc độ tuyến cáp",
                   )
                 }
-                className="flex items-center justify-center gap-1 h-14 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors text-sm touch-manipulation active:scale-95"
+                className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-colors text-sm touch-manipulation active:scale-95"
               >
                 <Share2 className="w-5 h-5" />
                 Chia sẻ
               </button>
             </div>
 
-            {/* ==================================================
-                BÁO CÁO 5S
-            ================================================== */}
+            {/* BÁO CÁO 5S */}
 
             <SectionTitle title="Báo cáo 5S" />
 
@@ -1263,9 +1295,7 @@ Trân trọng!`;
               icon={User}
             />
 
-            {/* ==================================================
-                HÌNH ẢNH 5S
-            ================================================== */}
+            {/* HÌNH ẢNH 5S */}
 
             <div className="mb-4">
               <label className="block text-xs font-bold text-slate-500 mb-2">
@@ -1350,9 +1380,7 @@ Trân trọng!`;
               )}
             </div>
 
-            {/* ==================================================
-                THỜI GIAN CA
-            ================================================== */}
+            {/* THỜI GIAN CA */}
 
             <div className="bg-white border-2 border-slate-100 rounded-2xl p-4 mb-4">
               <div className="flex items-center gap-2 mb-4">
@@ -1376,7 +1404,7 @@ Trân trọng!`;
                         thoiGianDauCa: e.target.value,
                       }))
                     }
-                    className="w-full border-2 border-slate-100 rounded-xl px-3 py-3 outline-none focus:border-blue-500 touch-manipulation"
+                    className="w-full min-h-[54px] border-2 border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-blue-500 text-[16px] touch-manipulation"
                   />
                 </div>
               ) : (
@@ -1394,15 +1422,13 @@ Trân trọng!`;
                         thoiGianCuoiCa: e.target.value,
                       }))
                     }
-                    className="w-full border-2 border-slate-100 rounded-xl px-3 py-3 outline-none focus:border-blue-500 touch-manipulation"
+                    className="w-full min-h-[54px] border-2 border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-blue-500 text-[16px] touch-manipulation"
                   />
                 </div>
               )}
             </div>
 
-            {/* ==================================================
-                GỢI Ý
-            ================================================== */}
+            {/* GỢI Ý */}
 
             <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-4">
               <div className="font-bold text-blue-700 mb-1">💡 Gợi ý</div>
@@ -1413,15 +1439,13 @@ Trân trọng!`;
               </div>
             </div>
 
-            {/* ==================================================
-                NÚT 5S
-            ================================================== */}
+            {/* NÚT 5S */}
 
-            <div className="grid grid-cols-3 gap-2 mt-2">
+            <div className="grid grid-cols-2 gap-2 mt-2">
               <button
                 type="button"
                 onClick={() => openPreview(generate5SContent(), anh5SPreview)}
-                className="flex items-center justify-center gap-1 h-14 rounded-2xl border-2 border-blue-500 text-blue-600 font-bold hover:bg-blue-50 transition-colors text-sm touch-manipulation active:scale-95"
+                className="flex items-center justify-center gap-2 h-14 rounded-2xl border-2 border-blue-500 text-blue-600 font-bold hover:bg-blue-50 transition-colors text-sm touch-manipulation active:scale-95"
               >
                 <Eye className="w-5 h-5" />
                 Xem
@@ -1429,19 +1453,10 @@ Trân trọng!`;
 
               <button
                 type="button"
-                onClick={() => copyToClipboard(generate5SContent())}
-                className="flex items-center justify-center gap-1 h-14 rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-colors text-sm touch-manipulation active:scale-95"
-              >
-                <Copy className="w-5 h-5" />
-                Copy
-              </button>
-
-              <button
-                type="button"
                 onClick={() =>
                   shareContent(generate5SContent(), "Báo cáo 5S", anh5S)
                 }
-                className="flex items-center justify-center gap-1 h-14 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors text-sm touch-manipulation active:scale-95"
+                className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors text-sm touch-manipulation active:scale-95"
               >
                 <Share2 className="w-5 h-5" />
                 Chia sẻ
@@ -1455,30 +1470,15 @@ Trân trọng!`;
         ====================================================== */}
 
         {activeTab !== 3 && (
-          <div className="grid grid-cols-3 gap-2 mt-8">
-            {/* XEM */}
-
+          <div className="grid grid-cols-2 gap-2 mt-8">
             <button
               type="button"
               onClick={() => openPreview(generateContent())}
-              className="flex items-center justify-center gap-1 h-14 rounded-2xl border-2 border-blue-500 text-blue-600 font-bold hover:bg-blue-50 transition-colors text-sm touch-manipulation active:scale-95"
+              className="flex items-center justify-center gap-2 h-14 rounded-2xl border-2 border-blue-500 text-blue-600 font-bold hover:bg-blue-50 transition-colors text-sm touch-manipulation active:scale-95"
             >
               <Eye className="w-5 h-5" />
               Xem
             </button>
-
-            {/* COPY */}
-
-            <button
-              type="button"
-              onClick={() => copyToClipboard(generateContent())}
-              className="flex items-center justify-center gap-1 h-14 rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-colors text-sm touch-manipulation active:scale-95"
-            >
-              <Copy className="w-5 h-5" />
-              Copy
-            </button>
-
-            {/* SHARE */}
 
             <button
               type="button"
@@ -1488,7 +1488,7 @@ Trân trọng!`;
                   `Báo cáo ${tabs[activeTab].title}`,
                 )
               }
-              className="flex items-center justify-center gap-1 h-14 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors text-sm touch-manipulation active:scale-95"
+              className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors text-sm touch-manipulation active:scale-95"
             >
               <Share2 className="w-5 h-5" />
               Chia sẻ
@@ -1548,16 +1548,16 @@ Trân trọng!`;
               </div>
             </div>
 
-            {/* FOOTER BUTTONS */}
+            {/* FOOTER */}
 
             <div className="p-5 pt-0 grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => copyToClipboard(previewContent)}
-                className="flex items-center justify-center gap-2 h-12 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 touch-manipulation active:scale-95"
+                onClick={() => setShowPreview(false)}
+                className="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-slate-200 text-slate-600 font-bold hover:bg-slate-50 touch-manipulation active:scale-95"
               >
-                <Copy className="w-4 h-4" />
-                Copy
+                <X className="w-4 h-4" />
+                Đóng
               </button>
 
               <button
