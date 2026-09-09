@@ -947,7 +947,6 @@ Trân trọng !`;
                   tocDo: v,
                 }))
               }
-              placeholder=""
             />
 
             <Input
