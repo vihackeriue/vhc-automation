@@ -93,7 +93,7 @@ export default function Home() {
     xuLy: "",
     tgDung: "",
     tgChayLai: "",
-    deXuat: "",
+    deXuat: "Không",
   });
 
   // Số tuyến dùng cho thông báo khẩn cấp
@@ -1212,7 +1212,7 @@ Trân trọng !`;
                     "Cập nhật tốc độ tuyến cáp",
                   )
                 }
-                className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-colors text-sm touch-manipulation active:scale-95"
+                className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors text-sm touch-manipulation active:scale-95"
               >
                 <Share2 className="w-5 h-5" />
                 Chia sẻ
