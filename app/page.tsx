@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ComponentType, ChangeEvent } from "react";
+
 import {
   AlertTriangle,
   CloudLightning,
@@ -15,6 +16,9 @@ import {
   Share2,
   ClipboardList,
   Trash2,
+  Image as ImageIcon,
+  Video,
+  Paperclip,
 } from "lucide-react";
 
 type InputProps = {
@@ -40,7 +44,11 @@ const Input = ({
     <div className="mb-4">
       <div className="relative">
         {Icon && !isTime && (
-          <Icon className="absolute left-4 top-4 text-blue-500 w-5 h-5 pointer-events-none z-10" />
+          <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none z-10" />
+        )}
+
+        {isTime && (
+          <Clock className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500 pointer-events-none z-10" />
         )}
 
         <input
@@ -49,13 +57,14 @@ const Input = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={label}
-          className={`w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl py-3.5 pr-4 outline-none transition-all text-[16px] font-medium text-slate-700 touch-manipulation ${
-            Icon && !isTime ? "pl-12" : "pl-4"
-          } ${list ? "pr-12" : ""} ${isTime ? "min-h-[54px] px-4" : ""}`}
+          className={`w-full bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl py-3.5 outline-none transition-all text-[16px] font-medium text-slate-700 touch-manipulation
+            ${Icon && !isTime ? "pl-12" : "pl-4"}
+            ${list ? "pr-12" : ""}
+            ${isTime ? "min-h-[54px] px-4 pr-12 appearance-none" : ""}`}
         />
 
         {list && (
-          <ChevronDown className="absolute right-4 top-4 text-slate-400 w-5 h-5 pointer-events-none" />
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none" />
         )}
       </div>
     </div>
@@ -64,9 +73,10 @@ const Input = ({
 
 const SectionTitle = ({ title }: { title: string }) => {
   return (
-    <div className="flex items-center my-5">
-      <div className="w-1 h-5 bg-blue-500 rounded-full mr-3" />
-      <span className="font-bold text-[16px] text-slate-800">{title}</span>
+    <div className="flex items-center gap-2 mb-3 mt-6">
+      <div className="w-1 h-6 bg-blue-500 rounded-full" />
+
+      <h2 className="font-extrabold text-[17px] text-slate-800">{title}</h2>
     </div>
   );
 };
@@ -77,6 +87,7 @@ export default function Home() {
   const [showPreview, setShowPreview] = useState(false);
   const [previewContent, setPreviewContent] = useState("");
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+
   const [toast, setToast] = useState("");
 
   // ============================================================
@@ -96,8 +107,11 @@ export default function Home() {
     deXuat: "Không",
   });
 
-  // Số tuyến dùng cho thông báo khẩn cấp
   const [tuyenKhanCap, setTuyenKhanCap] = useState("");
+
+  // File sự cố
+  const [suCoFiles, setSuCoFiles] = useState<File[]>([]);
+  const [suCoFilePreviews, setSuCoFilePreviews] = useState<string[]>([]);
 
   // ============================================================
   // DÔNG SÉT
@@ -121,18 +135,15 @@ export default function Home() {
     gio: "",
     tuyen: "",
 
-    // Các trụ và tốc độ gió
     truSo: "",
     tocDo: "",
     tocDoMax: "",
 
-    // Thông tin toàn tuyến
     mucGioThucTe: "",
     tocDoToanTuyen: "",
     xuHuong: "",
     nguyCo: "",
 
-    // Kiến nghị / đề xuất
     kienNghi: "",
     xinQuyetDinh: "",
     hoatDongTuyen: "",
@@ -144,14 +155,12 @@ export default function Home() {
   // ============================================================
 
   const [chung, setChung] = useState({
-    // Cập nhật tốc độ
     tocDoNgay: "",
     tocDoTuyen: "",
     tocDoHienTai: "",
     tocDoThoiGian: "",
     tocDoGhiChu: "",
 
-    // Báo cáo 5S
     loai5S: "Đầu ca",
     tuyen5S: "",
     ga5S: "",
@@ -159,6 +168,10 @@ export default function Home() {
     thoiGianDauCa: "",
     thoiGianCuoiCa: "",
   });
+
+  // ============================================================
+  // ẢNH 5S
+  // ============================================================
 
   const [anh5S, setAnh5S] = useState<File[]>([]);
   const [anh5SPreview, setAnh5SPreview] = useState<string[]>([]);
@@ -262,8 +275,7 @@ export default function Home() {
 
     const ghiChuLine = ghiChu ? `\nGhi chú: ${ghiChu}` : "";
 
-    return `
-Ngày: ${chung.tocDoNgay}
+    return `Ngày: ${chung.tocDoNgay}
 Tuyến cáp: ${chung.tocDoTuyen}
 Tốc độ hiện tại: ${chung.tocDoHienTai} m/s
 Thời gian: ${chung.tocDoThoiGian}${ghiChuLine}`;
@@ -280,6 +292,7 @@ Thời gian: ${chung.tocDoThoiGian}${ghiChuLine}`;
         : `Thời gian ra ca: ${chung.thoiGianCuoiCa}`;
 
     return `BÁO CÁO 5S ${chung.loai5S}
+
 Vị trí: Ga ${chung.ga5S}
 Nhân sự: ${chung.nhanSu5S}
 ${timeLine}`;
@@ -308,7 +321,6 @@ ${timeLine}`;
       return `BÁO CÁO SỰ CỐ
 
 Báo cáo Anh/Chị sự cố cáp treo ngày ${sc.ngay}
-
 • Tuyến cáp: ${sc.tuyen}
 • Ga: ${sc.ga}
 • NV vận hành: ${sc.nv}
@@ -332,14 +344,14 @@ Trân trọng!`;
 Ga: ${ds.ga}
 Tần suất (phút/lần): ${ds.tanSuat}
 
-----------------------------
+---
 
 - Số lần nghe tiếng sấm: ${ds.soLan}
 - Mây: ${ds.may}
 - Mưa: ${ds.mua}
 - Xu hướng dông sét (Tăng/Giảm/Không đổi): ${ds.xuHuong}
 
-----------------------------
+---
 
 Trân trọng!`;
     }
@@ -352,48 +364,148 @@ Trân trọng!`;
       return `Thời gian: ${cg.gio}
 
 THÔNG TIN CẤP GIÓ
-
 Phòng KTCT báo cáo a/c cập nhật thông tin gió trên tuyến
 
-+ Tuyến cáp số: ${cg.tuyen}
+- Tuyến cáp số: ${cg.tuyen}
 
 ———————————————
-
 Tốc độ gió:
 
-+ Trụ số: ${cg.truSo}
-+ Tốc độ (m/s): ${cg.tocDo}
-+ Tốc độ max (m/s): ${cg.tocDoMax}
-+ Mức độ gió thực tế trên tuyến: ${cg.mucGioThucTe}
+- Trụ số: ${cg.truSo}
+- Tốc độ (m/s): ${cg.tocDo}
+- Tốc độ max (m/s): ${cg.tocDoMax}
+- Mức độ gió thực tế trên tuyến: ${cg.mucGioThucTe}
 
 ———————————————
 
-+ Tốc độ gió toàn tuyến (m/s): ${cg.tocDoToanTuyen}
-+ Xu hướng gió (Tăng/Không đổi/Giảm): ${cg.xuHuong}
-+ Nguy cơ/cảnh báo: ${cg.nguyCo}
+- Tốc độ gió toàn tuyến (m/s): ${cg.tocDoToanTuyen}
+- Xu hướng gió (Tăng/Không đổi/Giảm): ${cg.xuHuong}
+- Nguy cơ/cảnh báo: ${cg.nguyCo}
 
 ———————————————
-
 Kiến nghị/Đề xuất:
 ${cg.kienNghi}
-+ Xin quyết định/chỉ đạo: ${cg.xinQuyetDinh}
-+ Hoạt động tuyến cáp: ${cg.hoatDongTuyen}
-+ Xin hỗ trợ: ${cg.xinHoTro}
+
+- Xin quyết định/chỉ đạo: ${cg.xinQuyetDinh}
+- Hoạt động tuyến cáp: ${cg.hoatDongTuyen}
+- Xin hỗ trợ: ${cg.xinHoTro}
 
 ———————————————
-
 Trân trọng !`;
     }
-
-    // ==========================================================
-    // CHUNG
-    // ==========================================================
 
     return generateTocDoContent();
   };
 
   // ============================================================
-  // SHARE
+  // SHARE - CHIA SẺ TEXT
+  // ============================================================
+
+  const shareText = async (text: string, title: string): Promise<boolean> => {
+    if (!text.trim()) {
+      showToast("Không có nội dung để chia sẻ!");
+      return false;
+    }
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title,
+          text,
+        });
+
+        return true;
+      }
+
+      await navigator.clipboard.writeText(text);
+
+      showToast("Thiết bị chưa hỗ trợ chia sẻ. Nội dung đã được copy!");
+
+      return true;
+    } catch (error) {
+      console.log("Share text cancelled:", error);
+      return false;
+    }
+  };
+
+  // ============================================================
+  // SHARE - CHIA SẺ FILE
+  // ============================================================
+
+  const shareFiles = async (files: File[], title: string): Promise<boolean> => {
+    if (!files.length) {
+      return false;
+    }
+
+    try {
+      if (!navigator.share) {
+        showToast("Thiết bị không hỗ trợ chia sẻ file.");
+        return false;
+      }
+
+      if (navigator.canShare && navigator.canShare({ files })) {
+        await navigator.share({
+          title,
+          files,
+        });
+
+        return true;
+      }
+
+      showToast("Thiết bị không hỗ trợ chia sẻ loại file này.");
+
+      return false;
+    } catch (error) {
+      console.log("Share files cancelled:", error);
+      return false;
+    }
+  };
+
+  // ============================================================
+  // SHARE - TEXT SAU ĐÓ FILE
+  // ============================================================
+
+  const shareTextThenFiles = async (
+    text: string,
+    title: string,
+    files: File[],
+  ) => {
+    if (!text.trim()) {
+      showToast("Không có nội dung để chia sẻ!");
+      return;
+    }
+
+    // Không có file -> chỉ chia sẻ text
+    if (!files.length) {
+      await shareText(text, title);
+      return;
+    }
+
+    /*
+     * QUAN TRỌNG:
+     *
+     * Không gửi text + file trong cùng navigator.share().
+     * Một số trình duyệt / Zalo xử lý không ổn định.
+     *
+     * Ta chia thành 2 bước:
+     * 1. Gửi text.
+     * 2. Sau khi người dùng quay lại app -> gửi file.
+     */
+
+    const textShared = await shareText(text, title);
+
+    if (!textShared) {
+      return;
+    }
+
+    // Cho trình duyệt hoàn tất thao tác share trước
+    window.setTimeout(async () => {
+      await shareFiles(files, `${title} - Hình ảnh / Video`);
+    }, 500);
+  };
+
+  // ============================================================
+  // SHARE CHÍNH
   // ============================================================
 
   const shareContent = async (
@@ -401,38 +513,11 @@ Trân trọng !`;
     title: string = `Báo cáo ${tabs[activeTab].title}`,
     files: File[] = [],
   ) => {
-    if (!text.trim()) {
-      showToast("Không có nội dung để chia sẻ!");
-      return;
-    }
-
-    try {
-      if (navigator.share) {
-        const shareData: ShareData = {
-          title,
-          text,
-        };
-
-        if (
-          files.length > 0 &&
-          navigator.canShare &&
-          navigator.canShare({ files })
-        ) {
-          shareData.files = files;
-        }
-
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(text);
-        showToast("Thiết bị chưa hỗ trợ chia sẻ. Nội dung đã được copy!");
-      }
-    } catch (error) {
-      console.log("Share cancelled:", error);
-    }
+    await shareTextThenFiles(text, title, files);
   };
 
   // ============================================================
-  // CHIA SẺ NHANH KHẨN CẤP
+  // KHẨN CẤP
   // ============================================================
 
   const getEmergencyStopMessage = () => {
@@ -455,35 +540,106 @@ Trân trọng !`;
       return;
     }
 
-    await shareContent(message, "Thông báo khẩn cấp");
+    await shareText(message, "Thông báo khẩn cấp");
+  };
+
+  // ============================================================
+  // FILE PREVIEW HELPER
+  // ============================================================
+
+  const createFilePreview = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        resolve(String(reader.result || ""));
+      };
+
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // ============================================================
+  // XỬ LÝ FILE SỰ CỐ
+  // ============================================================
+
+  const handleSuCoFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const files = Array.from(input.files || []);
+
+    if (!files.length) return;
+
+    const validFiles = files.filter(
+      (file) =>
+        file.type.startsWith("image/") || file.type.startsWith("video/"),
+    );
+
+    if (!validFiles.length) {
+      showToast("Chỉ được chọn hình ảnh hoặc video!");
+      input.value = "";
+      return;
+    }
+
+    setSuCoFiles((prev) => [...prev, ...validFiles]);
+
+    const previews = await Promise.all(validFiles.map(createFilePreview));
+
+    setSuCoFilePreviews((prev) => [...prev, ...previews]);
+
+    input.value = "";
+  };
+
+  // ============================================================
+  // XÓA FILE SỰ CỐ
+  // ============================================================
+
+  const removeSuCoFile = (index: number) => {
+    setSuCoFiles((prev) => prev.filter((_, i) => i !== index));
+
+    setSuCoFilePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // ============================================================
+  // XÓA TẤT CẢ FILE SỰ CỐ
+  // ============================================================
+
+  const removeAllSuCoFiles = () => {
+    setSuCoFiles([]);
+    setSuCoFilePreviews([]);
+
+    showToast("Đã xóa tất cả hình ảnh/video!");
   };
 
   // ============================================================
   // XỬ LÝ ẢNH 5S
   // ============================================================
 
-  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const files = Array.from(input.files || []);
 
     if (!files.length) return;
 
-    setAnh5S((prev) => [...prev, ...files]);
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
 
-    files.forEach((file) => {
-      const reader = new FileReader();
+    if (!imageFiles.length) {
+      showToast("Chỉ được chọn hình ảnh!");
+      input.value = "";
+      return;
+    }
 
-      reader.onload = () => {
-        setAnh5SPreview((prev) => [...prev, String(reader.result || "")]);
-      };
+    setAnh5S((prev) => [...prev, ...imageFiles]);
 
-      reader.readAsDataURL(file);
-    });
+    const previews = await Promise.all(imageFiles.map(createFilePreview));
 
-    event.currentTarget.value = "";
+    setAnh5SPreview((prev) => [...prev, ...previews]);
+
+    // Không dùng event.currentTarget ở đây nữa
+    input.value = "";
   };
 
   // ============================================================
-  // XÓA 1 ẢNH
+  // XÓA 1 ẢNH 5S
   // ============================================================
 
   const removeImage = (index: number) => {
@@ -493,7 +649,7 @@ Trân trọng !`;
   };
 
   // ============================================================
-  // XÓA TẤT CẢ ẢNH
+  // XÓA TẤT CẢ ẢNH 5S
   // ============================================================
 
   const removeAllImages = () => {
@@ -508,7 +664,7 @@ Trân trọng !`;
   // ============================================================
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-32 touch-manipulation">
+    <div className="min-h-screen bg-slate-50 pb-32">
       {/* ======================================================
           TOAST
       ====================================================== */}
@@ -759,6 +915,108 @@ Trân trọng !`;
                 }))
               }
             />
+
+            {/* ==================================================
+                ĐÍNH KÈM ẢNH / VIDEO SỰ CỐ
+            ================================================== */}
+
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-slate-500 mb-2">
+                Hình ảnh / Video sự cố
+              </label>
+
+              <label className="flex flex-col items-center justify-center w-full min-h-32 bg-white border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-2xl p-4 cursor-pointer transition-colors touch-manipulation">
+                {suCoFilePreviews.length > 0 ? (
+                  <div className="w-full">
+                    <div className="grid grid-cols-2 gap-3">
+                      {suCoFiles.map((file, index) => (
+                        <div key={`${file.name}-${index}`} className="relative">
+                          {file.type.startsWith("video/") ? (
+                            <video
+                              src={suCoFilePreviews[index]}
+                              controls
+                              className="w-full h-40 object-cover rounded-xl border border-slate-100 bg-black"
+                            />
+                          ) : (
+                            <img
+                              src={suCoFilePreviews[index]}
+                              alt={`Ảnh sự cố ${index + 1}`}
+                              className="w-full h-40 object-cover rounded-xl border border-slate-100"
+                            />
+                          )}
+
+                          <div className="absolute top-2 left-2 bg-slate-900/70 text-white text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1">
+                            {file.type.startsWith("video/") ? (
+                              <Video className="w-3 h-3" />
+                            ) : (
+                              <ImageIcon className="w-3 h-3" />
+                            )}
+
+                            {index + 1}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+
+                              removeSuCoFile(index);
+                            }}
+                            className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-red-500 text-white shadow-lg touch-manipulation active:scale-90"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="text-center text-sm font-semibold text-blue-600 mt-3">
+                      Chạm để thêm ảnh / video
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-2">
+                      <Paperclip className="w-6 h-6 text-blue-500" />
+                    </div>
+
+                    <span className="font-bold text-slate-700">
+                      Chọn ảnh hoặc video
+                    </span>
+
+                    <span className="text-xs text-slate-400 mt-1 text-center">
+                      Có thể chọn 1 hoặc nhiều ảnh / video
+                    </span>
+                  </>
+                )}
+
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleSuCoFileUpload}
+                />
+              </label>
+
+              {suCoFiles.length > 0 && (
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-sm font-semibold text-slate-500">
+                    Đã chọn {suCoFiles.length} file
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={removeAllSuCoFiles}
+                    className="flex items-center gap-1 text-sm font-semibold text-red-500 hover:text-red-600 touch-manipulation"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Xóa tất cả
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -810,8 +1068,9 @@ Trân trọng !`;
                   soLan: v,
                 }))
               }
-              list= "solansam-list"
+              list="solansam-list"
             />
+
             <datalist id="solansam-list">
               <option value="Chưa nghe tiếng sấm" />
               <option value="Nghe tiếng sấm xa" />
@@ -830,6 +1089,7 @@ Trân trọng !`;
                   }
                   list="may-list"
                 />
+
                 <datalist id="may-list">
                   <option value="Mây mù" />
                   <option value="Không thấy mây" />
@@ -848,6 +1108,7 @@ Trân trọng !`;
                   }
                   list="mua-list"
                 />
+
                 <datalist id="mua-list">
                   <option value="Mưa to" />
                   <option value="Mưa nhỏ" />
@@ -882,8 +1143,6 @@ Trân trọng !`;
 
         {activeTab === 2 && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* NGÀY / GIỜ */}
-
             <div className="flex gap-3">
               <div className="flex-1">
                 <Input
@@ -914,8 +1173,6 @@ Trân trọng !`;
               </div>
             </div>
 
-            {/* TUYẾN */}
-
             <Input
               label="Tuyến cáp số"
               value={cg.tuyen}
@@ -938,8 +1195,6 @@ Trân trọng !`;
               <option value="8" />
             </datalist>
 
-            {/* THÔNG TIN GIÓ */}
-
             <SectionTitle title="Tốc độ gió" />
 
             <Input
@@ -953,6 +1208,7 @@ Trân trọng !`;
               }
               list="tru-cg-list"
             />
+
             <datalist id="tru-cg-list">
               <option value="1" />
               <option value="2" />
@@ -1003,8 +1259,6 @@ Trân trọng !`;
               <option value="Gió mạnh" />
               <option value="Gió rất mạnh" />
             </datalist>
-
-            {/* TOÀN TUYẾN */}
 
             <SectionTitle title="Thông tin toàn tuyến" />
 
@@ -1063,8 +1317,6 @@ Trân trọng !`;
               <option value="Cảnh báo gió" />
               <option value="Báo động gió" />
             </datalist>
-
-            {/* KIẾN NGHỊ */}
 
             <SectionTitle title="Kiến nghị / Đề xuất" />
 
@@ -1142,8 +1394,6 @@ Trân trọng !`;
 
         {activeTab === 3 && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* CẬP NHẬT TỐC ĐỘ TUYẾN CÁP */}
-
             <SectionTitle title="Cập nhật tốc độ tuyến cáp" />
 
             <Input
@@ -1275,6 +1525,7 @@ Trân trọng !`;
                   className="w-full appearance-none bg-white border-2 border-slate-100 focus:border-blue-500 rounded-2xl py-3.5 px-4 pr-12 outline-none transition-all text-[16px] font-medium text-slate-700 touch-manipulation"
                 >
                   <option value="Đầu ca">Đầu ca</option>
+
                   <option value="Cuối ca">Cuối ca</option>
                 </select>
 
@@ -1304,6 +1555,7 @@ Trân trọng !`;
               }
               icon={User}
             />
+
             <datalist id="tuyen-5s-list">
               <option value="Nguyễn Văn Vĩ" />
               <option value="Huỳnh Nguyễn Kim Thanh" />
@@ -1342,6 +1594,7 @@ Trân trọng !`;
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+
                               removeImage(index);
                             }}
                             className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-red-500 text-white shadow-lg touch-manipulation active:scale-90"
@@ -1414,17 +1667,21 @@ Trân trọng !`;
                     Vào ca
                   </label>
 
-                  <input
-                    type="time"
-                    value={chung.thoiGianDauCa}
-                    onChange={(e) =>
-                      setChung((prev) => ({
-                        ...prev,
-                        thoiGianDauCa: e.target.value,
-                      }))
-                    }
-                    className="w-full min-h-[54px] border-2 border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-blue-500 text-[16px] touch-manipulation"
-                  />
+                  <div className="relative">
+                    <input
+                      type="time"
+                      value={chung.thoiGianDauCa}
+                      onChange={(e) =>
+                        setChung((prev) => ({
+                          ...prev,
+                          thoiGianDauCa: e.target.value,
+                        }))
+                      }
+                      className="w-full min-h-[54px] border-2 border-slate-100 rounded-xl px-4 pr-12 py-3 outline-none focus:border-blue-500 text-[16px] touch-manipulation appearance-none"
+                    />
+
+                    <Clock className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500 pointer-events-none" />
+                  </div>
                 </div>
               ) : (
                 <div>
@@ -1432,17 +1689,21 @@ Trân trọng !`;
                     Ra ca
                   </label>
 
-                  <input
-                    type="time"
-                    value={chung.thoiGianCuoiCa}
-                    onChange={(e) =>
-                      setChung((prev) => ({
-                        ...prev,
-                        thoiGianCuoiCa: e.target.value,
-                      }))
-                    }
-                    className="w-full min-h-[54px] border-2 border-slate-100 rounded-xl px-4 py-3 outline-none focus:border-blue-500 text-[16px] touch-manipulation"
-                  />
+                  <div className="relative">
+                    <input
+                      type="time"
+                      value={chung.thoiGianCuoiCa}
+                      onChange={(e) =>
+                        setChung((prev) => ({
+                          ...prev,
+                          thoiGianCuoiCa: e.target.value,
+                        }))
+                      }
+                      className="w-full min-h-[54px] border-2 border-slate-100 rounded-xl px-4 pr-12 py-3 outline-none focus:border-blue-500 text-[16px] touch-manipulation appearance-none"
+                    />
+
+                    <Clock className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500 pointer-events-none" />
+                  </div>
                 </div>
               )}
             </div>
@@ -1484,15 +1745,20 @@ Trân trọng !`;
           </div>
         )}
 
-        {/* ======================================================
+        {/* ====================================================
             BUTTONS - 3 TAB ĐẦU
-        ====================================================== */}
+        ==================================================== */}
 
         {activeTab !== 3 && (
           <div className="grid grid-cols-2 gap-2 mt-8">
             <button
               type="button"
-              onClick={() => openPreview(generateContent())}
+              onClick={() =>
+                openPreview(
+                  generateContent(),
+                  activeTab === 0 ? suCoFilePreviews : [],
+                )
+              }
               className="flex items-center justify-center gap-2 h-14 rounded-2xl border-2 border-blue-500 text-blue-600 font-bold hover:bg-blue-50 transition-colors text-sm touch-manipulation active:scale-95"
             >
               <Eye className="w-5 h-5" />
@@ -1505,6 +1771,7 @@ Trân trọng !`;
                 shareContent(
                   generateContent(),
                   `Báo cáo ${tabs[activeTab].title}`,
+                  activeTab === 0 ? suCoFiles : [],
                 )
               }
               className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors text-sm touch-manipulation active:scale-95"
@@ -1581,7 +1848,19 @@ Trân trọng !`;
 
               <button
                 type="button"
-                onClick={() => shareContent(previewContent, "Báo cáo vận hành")}
+                onClick={() => {
+                  setShowPreview(false);
+
+                  shareContent(
+                    previewContent,
+                    "Báo cáo vận hành",
+                    activeTab === 0
+                      ? suCoFiles
+                      : activeTab === 3 && previewContent.includes("BÁO CÁO 5S")
+                        ? anh5S
+                        : [],
+                  );
+                }}
                 className="flex items-center justify-center gap-2 h-12 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 touch-manipulation active:scale-95"
               >
                 <Share2 className="w-4 h-4" />
@@ -1600,6 +1879,7 @@ Trân trọng !`;
         <div className="pointer-events-auto bg-white/95 backdrop-blur-xl border border-slate-100 rounded-[36px] p-1.5 flex justify-between shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)]">
           {tabs.map((tab) => {
             const Icon = tab.icon;
+
             const isActive = activeTab === tab.id;
 
             return (
