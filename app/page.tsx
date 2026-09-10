@@ -279,9 +279,7 @@ Thời gian: ${chung.tocDoThoiGian}${ghiChuLine}`;
         ? `Thời gian vào ca: ${chung.thoiGianDauCa}`
         : `Thời gian ra ca: ${chung.thoiGianCuoiCa}`;
 
-    return `BÁO CÁO 5S
-
-Loại: ${chung.loai5S}
+    return `BÁO CÁO 5S ${chung.loai5S}
 Vị trí: ${chung.ga5S}
 Tuyến cáp: ${chung.tuyen5S}
 Nhân sự: ${chung.nhanSu5S}
