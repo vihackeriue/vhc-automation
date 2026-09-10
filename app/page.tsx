@@ -319,7 +319,7 @@ Báo cáo Anh/Chị sự cố cáp treo ngày ${sc.ngay}
 • Thời gian chạy lại: ${sc.tgChayLai}
 • Đề xuất: ${sc.deXuat}
 
-Trân trọng`;
+Trân trọng!`;
     }
 
     // ==========================================================
@@ -810,7 +810,12 @@ Trân trọng !`;
                   soLan: v,
                 }))
               }
+              list= "solansam-list"
             />
+            <datalist id="solansam-list">
+              <option value="Chưa nghe tiếng sấm" />
+              <option value="Nghe tiếng sấm xa" />
+            </datalist>
 
             <div className="flex gap-3">
               <div className="flex-1">
@@ -823,7 +828,12 @@ Trân trọng !`;
                       may: v,
                     }))
                   }
+                  list="may-list"
                 />
+                <datalist id="may-list">
+                  <option value="Mây mù" />
+                  <option value="Không thấy mây" />
+                </datalist>
               </div>
 
               <div className="flex-1">
@@ -836,7 +846,13 @@ Trân trọng !`;
                       mua: v,
                     }))
                   }
+                  list="mua-list"
                 />
+                <datalist id="mua-list">
+                  <option value="Mưa to" />
+                  <option value="Mưa nhỏ" />
+                  <option value="Không mưa" />
+                </datalist>
               </div>
             </div>
 
@@ -917,6 +933,9 @@ Trân trọng !`;
               <option value="2" />
               <option value="3" />
               <option value="4" />
+              <option value="5" />
+              <option value="6" />
+              <option value="8" />
             </datalist>
 
             {/* THÔNG TIN GIÓ */}
@@ -932,7 +951,17 @@ Trân trọng !`;
                   truSo: v,
                 }))
               }
+              list="tru-cg-list"
             />
+            <datalist id="tru-cg-list">
+              <option value="1" />
+              <option value="2" />
+              <option value="4,9,14,25" />
+              <option value="4" />
+              <option value="3,4" />
+              <option value="8,16,20,24,27" />
+              <option value="8" />
+            </datalist>
 
             <Input
               label="Tốc độ (m/s)"
