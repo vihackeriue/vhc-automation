@@ -262,8 +262,7 @@ export default function Home() {
 
     const ghiChuLine = ghiChu ? `\nGhi chú: ${ghiChu}` : "";
 
-    return `CẬP NHẬT TỐC ĐỘ TUYẾN CÁP
-
+    return `
 Ngày: ${chung.tocDoNgay}
 Tuyến cáp: ${chung.tocDoTuyen}
 Tốc độ hiện tại: ${chung.tocDoHienTai} m/s
