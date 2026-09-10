@@ -401,111 +401,8 @@ Trân trọng !`;
   // SHARE - CHIA SẺ TEXT
   // ============================================================
 
-  const shareText = async (text: string, title: string): Promise<boolean> => {
-    if (!text.trim()) {
-      showToast("Không có nội dung để chia sẻ!");
-      return false;
-    }
-
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title,
-          text,
-        });
-
-        return true;
-      }
-
-      await navigator.clipboard.writeText(text);
-
-      showToast("Thiết bị chưa hỗ trợ chia sẻ. Nội dung đã được copy!");
-
-      return true;
-    } catch (error) {
-      console.log("Share text cancelled:", error);
-      return false;
-    }
-  };
-
   // ============================================================
-  // SHARE - CHIA SẺ FILE
-  // ============================================================
-
-  const shareFiles = async (files: File[], title: string): Promise<boolean> => {
-    if (!files.length) {
-      return false;
-    }
-
-    try {
-      if (!navigator.share) {
-        showToast("Thiết bị không hỗ trợ chia sẻ file.");
-        return false;
-      }
-
-      if (navigator.canShare && navigator.canShare({ files })) {
-        await navigator.share({
-          title,
-          files,
-        });
-
-        return true;
-      }
-
-      showToast("Thiết bị không hỗ trợ chia sẻ loại file này.");
-
-      return false;
-    } catch (error) {
-      console.log("Share files cancelled:", error);
-      return false;
-    }
-  };
-
-  // ============================================================
-  // SHARE - TEXT SAU ĐÓ FILE
-  // ============================================================
-
-  const shareTextThenFiles = async (
-    text: string,
-    title: string,
-    files: File[],
-  ) => {
-    if (!text.trim()) {
-      showToast("Không có nội dung để chia sẻ!");
-      return;
-    }
-
-    // Không có file -> chỉ chia sẻ text
-    if (!files.length) {
-      await shareText(text, title);
-      return;
-    }
-
-    /*
-     * QUAN TRỌNG:
-     *
-     * Không gửi text + file trong cùng navigator.share().
-     * Một số trình duyệt / Zalo xử lý không ổn định.
-     *
-     * Ta chia thành 2 bước:
-     * 1. Gửi text.
-     * 2. Sau khi người dùng quay lại app -> gửi file.
-     */
-
-    const textShared = await shareText(text, title);
-
-    if (!textShared) {
-      return;
-    }
-
-    // Cho trình duyệt hoàn tất thao tác share trước
-    window.setTimeout(async () => {
-      await shareFiles(files, `${title} - Hình ảnh / Video`);
-    }, 500);
-  };
-
-  // ============================================================
-  // SHARE CHÍNH
+  // SHARE - TEXT + ẢNH / VIDEO
   // ============================================================
 
   const shareContent = async (
@@ -513,7 +410,81 @@ Trân trọng !`;
     title: string = `Báo cáo ${tabs[activeTab].title}`,
     files: File[] = [],
   ) => {
-    await shareTextThenFiles(text, title, files);
+    if (!text.trim()) {
+      showToast("Không có nội dung để chia sẻ!");
+      return;
+    }
+
+    try {
+      // ========================================================
+      // 1. Không có file -> chia sẻ text
+      // ========================================================
+
+      if (!files.length) {
+        if (navigator.share) {
+          await navigator.share({
+            title,
+            text,
+          });
+
+          return;
+        }
+
+        // Fallback nếu trình duyệt không hỗ trợ Share API
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(text);
+          showToast("Nội dung đã được copy!");
+          return;
+        }
+
+        showToast("Thiết bị không hỗ trợ chia sẻ.");
+        return;
+      }
+
+      // ========================================================
+      // 2. Có ảnh / video
+      // ========================================================
+
+      if (!navigator.share) {
+        showToast("Trình duyệt này không hỗ trợ chia sẻ ảnh/video.");
+        return;
+      }
+
+      // Kiểm tra thiết bị có hỗ trợ chia sẻ file hay không
+      if (!navigator.canShare) {
+        showToast("Thiết bị không hỗ trợ chia sẻ ảnh/video.");
+        return;
+      }
+
+      const canShareFiles = navigator.canShare({
+        files,
+      });
+
+      if (!canShareFiles) {
+        showToast("Thiết bị không hỗ trợ loại ảnh/video này.");
+        return;
+      }
+
+      // ========================================================
+      // 3. QUAN TRỌNG:
+      //    Gửi TEXT + FILE trong cùng một navigator.share()
+      // ========================================================
+
+      await navigator.share({
+        title,
+        text,
+        files,
+      });
+    } catch (error) {
+      console.log("Share error:", error);
+
+      // Người dùng bấm Cancel thì không báo lỗi
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
+      showToast("Không thể chia sẻ. Hãy thử lại trên điện thoại.");
+    }
   };
 
   // ============================================================
@@ -540,7 +511,7 @@ Trân trọng !`;
       return;
     }
 
-    await shareText(message, "Thông báo khẩn cấp");
+    await shareContent(message, "Thông báo khẩn cấp");
   };
 
   // ============================================================
