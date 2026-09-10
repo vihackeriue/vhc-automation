@@ -280,8 +280,7 @@ Thời gian: ${chung.tocDoThoiGian}${ghiChuLine}`;
         : `Thời gian ra ca: ${chung.thoiGianCuoiCa}`;
 
     return `BÁO CÁO 5S ${chung.loai5S}
-Vị trí: ${chung.ga5S}
-Tuyến cáp: ${chung.tuyen5S}
+Vị trí: Ga ${chung.ga5S}
 Nhân sự: ${chung.nhanSu5S}
 ${timeLine}`;
   };
@@ -1143,9 +1142,13 @@ Trân trọng !`;
             />
 
             <datalist id="tuyen-chung-list">
-              <option value="Tuyến 1" />
-              <option value="Tuyến 2" />
-              <option value="Tuyến 3" />
+              <option value="1" />
+              <option value="2" />
+              <option value="3" />
+              <option value="4" />
+              <option value="5" />
+              <option value="6" />
+              <option value="8" />
             </datalist>
 
             <div className="flex gap-3">
@@ -1251,24 +1254,6 @@ Trân trọng !`;
             </div>
 
             <Input
-              label="Tuyến cáp"
-              value={chung.tuyen5S}
-              onChange={(v) =>
-                setChung((prev) => ({
-                  ...prev,
-                  tuyen5S: v,
-                }))
-              }
-              list="tuyen-5s-list"
-            />
-
-            <datalist id="tuyen-5s-list">
-              <option value="Tuyến 1" />
-              <option value="Tuyến 2" />
-              <option value="Tuyến 3" />
-            </datalist>
-
-            <Input
               label="Vị trí: Ga"
               value={chung.ga5S}
               onChange={(v) =>
@@ -1290,6 +1275,15 @@ Trân trọng !`;
               }
               icon={User}
             />
+            <datalist id="tuyen-5s-list">
+              <option value="Nguyễn Văn Vĩ" />
+              <option value="Huỳnh Nguyễn Kim Thanh" />
+              <option value="Trần Quang Nam" />
+              <option value="Cao Thị Hải Yến" />
+              <option value="Nguyễn Thanh An" />
+              <option value="Nguyễn Như Nguyên" />
+              <option value="Trương Quốc Cường" />
+            </datalist>
 
             {/* HÌNH ẢNH 5S */}
 
