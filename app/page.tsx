@@ -590,7 +590,7 @@ Trân trọng !`;
 
     if (!files.length) return;
 
-    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+    const imageFiles = files.filter((file) => file.type.startsWith("image/")|| file.type.startsWith("video/"),);
 
     if (!imageFiles.length) {
       showToast("Chỉ được chọn hình ảnh!");
@@ -1591,14 +1591,14 @@ Trân trọng !`;
                     </span>
               
                     <span className="text-xs text-slate-400 mt-1 text-center">
-                      Có thể chọn 1 hoặc nhiều ảnh
+                      Có thể chọn 1 hoặc nhiều ảnh hoặc video
                     </span>
                   </>
                 )}
               
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   multiple
                   className="hidden"
                   onChange={handleImageUpload}
