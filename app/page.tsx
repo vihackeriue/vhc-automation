@@ -1566,7 +1566,7 @@ Trân trọng !`;
                               e.preventDefault();
                               e.stopPropagation();
               
-                              remove5SFile(index);
+                              removeImage(index);
                             }}
                             className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-red-500 text-white shadow-lg touch-manipulation active:scale-90"
                           >
