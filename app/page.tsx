@@ -288,13 +288,12 @@ Thời gian: ${chung.tocDoThoiGian}${ghiChuLine}`;
   const generate5SContent = () => {
     const timeLine =
       chung.loai5S === "Đầu ca"
-        ? `Thời gian vào ca: ${chung.thoiGianDauCa}`
-        : `Thời gian ra ca: ${chung.thoiGianCuoiCa}`;
+        ? `*Thời gian vào ca: ${chung.thoiGianDauCa}`
+        : `*Thời gian ra ca: ${chung.thoiGianCuoiCa}`;
 
     return `BÁO CÁO 5S ${chung.loai5S}
-
-Vị trí: Ga ${chung.ga5S}
-Nhân sự: ${chung.nhanSu5S}
+*Vị trí: Ga ${chung.ga5S}
+*Nhân sự: ${chung.nhanSu5S}
 ${timeLine}`;
   };
 
