@@ -581,30 +581,35 @@ Trân trọng !`;
   };
 
   // ============================================================
-  // XỬ LÝ ẢNH 5S
+  // XỬ LÝ FILE 5S
+  // GIỐNG HOÀN TOÀN CÁCH XỬ LÝ FILE SỰ CỐ
   // ============================================================
 
-  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handle5SFileUpload = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
     const input = event.currentTarget;
     const files = Array.from(input.files || []);
 
     if (!files.length) return;
 
-    const imageFiles = files.filter((file) => file.type.startsWith("image/")|| file.type.startsWith("video/"),);
+    const validFiles = files.filter(
+      (file) =>
+        file.type.startsWith("image/") || file.type.startsWith("video/"),
+    );
 
-    if (!imageFiles.length) {
-      showToast("Chỉ được chọn hình ảnh!");
+    if (!validFiles.length) {
+      showToast("Chỉ được chọn hình ảnh hoặc video!");
       input.value = "";
       return;
     }
 
-    setAnh5S((prev) => [...prev, ...imageFiles]);
+    setAnh5S((prev) => [...prev, ...validFiles]);
 
-    const previews = await Promise.all(imageFiles.map(createFilePreview));
+    const previews = await Promise.all(validFiles.map(createFilePreview));
 
     setAnh5SPreview((prev) => [...prev, ...previews]);
 
-    // Không dùng event.currentTarget ở đây nữa
     input.value = "";
   };
 
@@ -1536,11 +1541,13 @@ Trân trọng !`;
               <option value="Trương Quốc Cường" />
             </datalist>
 
-            {/* HÌNH ẢNH 5S */}
+            {/* ==================================================
+                ĐÍNH KÈM ẢNH / VIDEO 5S
+            ================================================== */}
 
             <div className="mb-4">
               <label className="block text-xs font-bold text-slate-500 mb-2">
-                Hình ảnh
+                Hình ảnh / Video 5S
               </label>
 
               <label className="flex flex-col items-center justify-center w-full min-h-32 bg-white border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-2xl p-4 cursor-pointer transition-colors touch-manipulation">
@@ -1548,24 +1555,40 @@ Trân trọng !`;
                   <div className="w-full">
                     <div className="grid grid-cols-2 gap-3">
                       {anh5S.map((file, index) => (
-                        <div key={`${file.name}-${index}`} className="relative">
-                          <img
-                            src={anh5SPreview[index]}
-                            alt={`Ảnh 5S ${index + 1}`}
-                            className="w-full h-40 object-cover rounded-xl border border-slate-100"
-                          />
-              
+                        <div
+                          key={`${file.name}-${index}`}
+                          className="relative"
+                        >
+                          {file.type.startsWith("video/") ? (
+                            <video
+                              src={anh5SPreview[index]}
+                              controls
+                              className="w-full h-40 object-cover rounded-xl border border-slate-100 bg-black"
+                            />
+                          ) : (
+                            <img
+                              src={anh5SPreview[index]}
+                              alt={`Ảnh 5S ${index + 1}`}
+                              className="w-full h-40 object-cover rounded-xl border border-slate-100"
+                            />
+                          )}
+
                           <div className="absolute top-2 left-2 bg-slate-900/70 text-white text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1">
-                            <ImageIcon className="w-3 h-3" />
+                            {file.type.startsWith("video/") ? (
+                              <Video className="w-3 h-3" />
+                            ) : (
+                              <ImageIcon className="w-3 h-3" />
+                            )}
+
                             {index + 1}
                           </div>
-              
+
                           <button
                             type="button"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-              
+
                               removeImage(index);
                             }}
                             className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-red-500 text-white shadow-lg touch-manipulation active:scale-90"
@@ -1575,9 +1598,9 @@ Trân trọng !`;
                         </div>
                       ))}
                     </div>
-              
+
                     <div className="text-center text-sm font-semibold text-blue-600 mt-3">
-                      Chạm để thêm ảnh
+                      Chạm để thêm ảnh / video
                     </div>
                   </div>
                 ) : (
@@ -1585,30 +1608,30 @@ Trân trọng !`;
                     <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-2">
                       <Paperclip className="w-6 h-6 text-blue-500" />
                     </div>
-              
+
                     <span className="font-bold text-slate-700">
-                      Chọn ảnh 5S
+                      Chọn ảnh hoặc video 5S
                     </span>
-              
+
                     <span className="text-xs text-slate-400 mt-1 text-center">
-                      Có thể chọn 1 hoặc nhiều ảnh hoặc video
+                      Có thể chọn 1 hoặc nhiều ảnh / video
                     </span>
                   </>
                 )}
-              
+
                 <input
                   type="file"
                   accept="image/*,video/*"
                   multiple
                   className="hidden"
-                  onChange={handleImageUpload}
+                  onChange={handle5SFileUpload}
                 />
               </label>
 
               {anh5S.length > 0 && (
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-sm font-semibold text-slate-500">
-                    Đã chọn {anh5S.length} hình ảnh
+                    Đã chọn {anh5S.length} file
                   </span>
 
                   <button
