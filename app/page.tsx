@@ -1547,25 +1547,26 @@ Trân trọng !`;
                 {anh5SPreview.length > 0 ? (
                   <div className="w-full">
                     <div className="grid grid-cols-2 gap-3">
-                      {anh5SPreview.map((src, index) => (
-                        <div key={`${src}-${index}`} className="relative">
+                      {anh5S.map((file, index) => (
+                        <div key={`${file.name}-${index}`} className="relative">
                           <img
-                            src={src}
-                            alt={`Ảnh báo cáo 5S ${index + 1}`}
+                            src={anh5SPreview[index]}
+                            alt={`Ảnh 5S ${index + 1}`}
                             className="w-full h-40 object-cover rounded-xl border border-slate-100"
                           />
-
-                          <div className="absolute top-2 left-2 bg-slate-900/70 text-white text-xs font-bold px-2 py-1 rounded-lg">
+              
+                          <div className="absolute top-2 left-2 bg-slate-900/70 text-white text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1">
+                            <ImageIcon className="w-3 h-3" />
                             {index + 1}
                           </div>
-
+              
                           <button
                             type="button"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-
-                              removeImage(index);
+              
+                              remove5SFile(index);
                             }}
                             className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-red-500 text-white shadow-lg touch-manipulation active:scale-90"
                           >
@@ -1574,27 +1575,27 @@ Trân trọng !`;
                         </div>
                       ))}
                     </div>
-
+              
                     <div className="text-center text-sm font-semibold text-blue-600 mt-3">
-                      Chạm để thêm hình ảnh
+                      Chạm để thêm ảnh
                     </div>
                   </div>
                 ) : (
                   <>
                     <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-2">
-                      <span className="text-2xl">📷</span>
+                      <Paperclip className="w-6 h-6 text-blue-500" />
                     </div>
-
+              
                     <span className="font-bold text-slate-700">
-                      Chọn hình ảnh
+                      Chọn ảnh 5S
                     </span>
-
-                    <span className="text-xs text-slate-400 mt-1">
+              
+                    <span className="text-xs text-slate-400 mt-1 text-center">
                       Có thể chọn 1 hoặc nhiều ảnh
                     </span>
                   </>
                 )}
-
+              
                 <input
                   type="file"
                   accept="image/*"
